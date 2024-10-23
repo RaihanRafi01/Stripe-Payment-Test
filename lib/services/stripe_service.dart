@@ -7,23 +7,32 @@ class StripeService {
 
   static final StripeService instance = StripeService._();
 
-  Future<void> makePayment() async {
+  Future<void> makePaymentWithCard({
+    required int amount,
+    required String currency,
+    required Map<String, dynamic> paymentMethod,
+  }) async {
     try {
-      String? paymentIntentClientSecret = await _createPaymentIntent(10, "usd");
-      if (paymentIntentClientSecret ==null) return;
+      // Create a payment intent
+      String? paymentIntentClientSecret = await _createPaymentIntent(amount, currency);
+      if (paymentIntentClientSecret == null) return;
 
-      await Stripe.instance.initPaymentSheet(paymentSheetParameters: SetupPaymentSheetParameters(
-        paymentIntentClientSecret: paymentIntentClientSecret,
-        merchantDisplayName: "Raihan Rafi"
-      ),
+      // Confirm the payment intent with card details
+      await Stripe.instance.confirmPayment(
+        data: PaymentMethodParams.card(
+          paymentMethodData: PaymentMethodData.fromJson(paymentMethod),
+        ), paymentIntentClientSecret: paymentIntentClientSecret,
       );
-      await _processPayment();
-    } catch (e){
+
+      // Handle payment success
+      print('Payment successful!');
+    } catch (e) {
       print(e);
     }
   }
-  Future<String?> _createPaymentIntent(int amount, String currency) async{
-    try{
+
+  Future<String?> _createPaymentIntent(int amount, String currency) async {
+    try {
       final Dio dio = Dio();
       Map<String, dynamic> data = {
         'amount': _calculateAmount(amount),
@@ -31,32 +40,26 @@ class StripeService {
       };
       var response = await dio.post("https://api.stripe.com/v1/payment_intents",
           data: data,
-          options: Options(contentType: Headers.formUrlEncodedContentType,
-              headers: {"Authorization": "Bearer $stripeSecretKey",
-              "Content-Type": 'application/x-www-form-urlencoded'
-              },
+          options: Options(
+            contentType: Headers.formUrlEncodedContentType,
+            headers: {
+              "Authorization": "Bearer $stripeSecretKey",
+              "Content-Type": 'application/x-www-form-urlencoded',
+            },
           ));
-      if(response.data != null){
+      if (response.data != null) {
         print("Response Data : ${response.data}");
         return response.data["client_secret"];
       }
       return null;
-    }catch(e){
+    } catch (e) {
       print(e);
     }
     return null;
   }
 
-  Future<void> _processPayment() async{
-    try{
-      await Stripe.instance.presentPaymentSheet();
-    }catch(e){
-      print(e);
-    }
-  }
-
-  String _calculateAmount(int amount){
-    final calculatedAmount = amount*100;
+  String _calculateAmount(int amount) {
+    final calculatedAmount = amount * 100;
     return calculatedAmount.toString();
   }
 }
