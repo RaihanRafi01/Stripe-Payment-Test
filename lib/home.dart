@@ -20,7 +20,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     // Detecting dark mode
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Custom Payment Gateway'),
@@ -50,7 +49,7 @@ class _HomePageState extends State<HomePage> {
                     borderSide: const BorderSide(color: Colors.teal),
                   ),
                 ),
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true), // Accept decimal values
               ),
               const SizedBox(height: 16),
               TextField(
@@ -73,25 +72,24 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 8),
-               CardFormField(
-                  style: CardFormStyle(
-                    backgroundColor: Colors.teal,
-                    textColor: Colors.black,
-                    placeholderColor: Colors.black,
-                    borderRadius: 8,
-                  ),
-                  onCardChanged: (card) {
-                    paymentMethod = card?.toJson();
-                  },
+              CardFormField(
+                style: CardFormStyle(
+                  backgroundColor: Colors.teal,
+                  textColor: Colors.black,
+                  placeholderColor: Colors.black,
+                  borderRadius: 8,
                 ),
-
+                onCardChanged: (card) {
+                  paymentMethod = card?.toJson();
+                },
+              ),
               const SizedBox(height: 32),
               Center(
                 child: ElevatedButton(
                   onPressed: () async {
-                    final amount = int.tryParse(_amountController.text);
+                    final amount = double.tryParse(_amountController.text); // Parse as double
                     final currency = _currencyController.text;
-          
+
                     if (amount != null && currency.isNotEmpty && paymentMethod != null) {
                       await StripeService.instance.makePaymentWithCard(
                         amount: amount,

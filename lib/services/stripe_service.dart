@@ -8,7 +8,7 @@ class StripeService {
   static final StripeService instance = StripeService._();
 
   Future<void> makePaymentWithCard({
-    required int amount,
+    required double amount,  // Change this to double
     required String currency,
     required Map<String, dynamic> paymentMethod,
   }) async {
@@ -21,7 +21,8 @@ class StripeService {
       await Stripe.instance.confirmPayment(
         data: PaymentMethodParams.card(
           paymentMethodData: PaymentMethodData.fromJson(paymentMethod),
-        ), paymentIntentClientSecret: paymentIntentClientSecret,
+        ),
+        paymentIntentClientSecret: paymentIntentClientSecret,
       );
 
       // Handle payment success
@@ -31,11 +32,11 @@ class StripeService {
     }
   }
 
-  Future<String?> _createPaymentIntent(int amount, String currency) async {
+  Future<String?> _createPaymentIntent(double amount, String currency) async {  // Change this to double
     try {
       final Dio dio = Dio();
       Map<String, dynamic> data = {
-        'amount': _calculateAmount(amount),
+        'amount': _calculateAmount(amount),  // Use updated calculation
         'currency': currency,
       };
       var response = await dio.post("https://api.stripe.com/v1/payment_intents",
@@ -43,7 +44,7 @@ class StripeService {
           options: Options(
             contentType: Headers.formUrlEncodedContentType,
             headers: {
-              "Authorization": "Bearer $stripeSecretKey",
+              "Authorization": "Bearer $stripeSecretKey",  // Make sure to set your secret key here
               "Content-Type": 'application/x-www-form-urlencoded',
             },
           ));
@@ -58,8 +59,8 @@ class StripeService {
     return null;
   }
 
-  String _calculateAmount(int amount) {
-    final calculatedAmount = amount * 100;
+  String _calculateAmount(double amount) {
+    final calculatedAmount = (amount * 100).round();  // Convert to cents and round to integer
     return calculatedAmount.toString();
   }
 }
